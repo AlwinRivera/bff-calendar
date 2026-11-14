@@ -2,6 +2,8 @@
 
 See when your besties are free — across time zones.
 
+**Live:** https://alwinrivera.github.io/bff-calendar/
+
 - `index.html`, `app.js`, `config.js` — the whole app (static files, no build step)
 - Backend: Supabase project **bff-calendar** (org PisoPilot), free tier
 - Database: `profiles`, `circles`, `circle_members`, `blocks` with row-level security —
@@ -15,8 +17,7 @@ Any static server works, e.g. `npx serve .` then open http://localhost:3000
 ## Status (Nov 14)
 - Database + security rules: done and tested (circle members see each other; outsiders see nothing).
 - Anonymous sign-in: enabled in Supabase.
-- Not yet online — next step is free hosting (GitHub Pages / Netlify / Vercel).
-  After it's live, set Supabase → Authentication → URL Configuration → Site URL to the live link
+- Live on GitHub Pages (free). To do: set Supabase → Authentication → URL Configuration → Site URL to the live link
   so "save my account" emails work.
 - Test leftovers to delete when convenient (Supabase SQL editor):
     delete from public.circles where name = 'TEST circle';
