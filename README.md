@@ -2,7 +2,7 @@
 
 See when your besties are free — across time zones.
 
-**Live:** https://alwinrivera.github.io/bff-calendar/
+**Live:** https://bffcalendar.netlify.app/
 
 - `index.html`, `app.js`, `config.js` — the whole app (static files, no build step)
 - Backend: Supabase project **bff-calendar** (org PisoPilot), free tier
@@ -17,7 +17,7 @@ Any static server works, e.g. `npx serve .` then open http://localhost:3000
 ## Status (Nov 14)
 - Database + security rules: done and tested (circle members see each other; outsiders see nothing).
 - Anonymous sign-in: enabled in Supabase.
-- Live on GitHub Pages (free). To do: set Supabase → Authentication → URL Configuration → Site URL to the live link
+- Live on Netlify (free, manual upload of a single inlined index.html). Done: set Supabase → Authentication → URL Configuration → Site URL to the live link
   so "save my account" emails work.
 - Test leftovers to delete when convenient (Supabase SQL editor):
     delete from public.circles where name = 'TEST circle';
@@ -26,3 +26,9 @@ Any static server works, e.g. `npx serve .` then open http://localhost:3000
 ## Free-tier limits to know
 - Supabase free projects pause after ~1 week with no activity (open the app or dashboard to wake it).
 - Built-in email sends only a few emails per hour — fine for friends; add a free SMTP (e.g. Resend) before going SaaS.
+
+## Deploying updates
+Netlify project **bffcalendar** was deployed by uploading one self-contained `index.html`
+(config.js and app.js inlined). To update: rebuild that file and drag it onto
+Netlify → bffcalendar → Deploys, or connect this repo in Netlify (Project configuration → Build & deploy → Link repository)
+so every push deploys automatically.
