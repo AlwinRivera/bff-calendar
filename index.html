@@ -21,7 +21,7 @@ html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Nunito,syst
 body{background:
   radial-gradient(circle at 10% 0%,#FFE1EA 0,transparent 40%),
   radial-gradient(circle at 100% 20%,#E6F7F1 0,transparent 35%),var(--bg);min-height:100vh}
-#app{max-width:520px;margin:0 auto;padding:18px 16px 110px}
+#app{max-width:520px;margin:0 auto;padding:18px 16px 190px}
 header{text-align:center;padding:6px 0 10px}
 .logo{font-family:Fredoka,sans-serif;font-size:30px;font-weight:700;letter-spacing:-.5px;color:var(--ink)}
 .logo .h{color:var(--pink);display:inline-block;animation:beat 2.4s ease-in-out infinite}
@@ -137,10 +137,10 @@ details li{margin-bottom:4px}
 .file input{display:none}
 .hint{font-size:13px;color:var(--muted);margin:6px 0 0}
 
-nav.tabs{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);display:flex;gap:4px;background:#FFF;padding:6px;border-radius:99px;box-shadow:0 10px 30px rgba(180,110,140,.25);z-index:5}
+nav.tabs{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:4px;background:#FFF;padding:6px;border-radius:99px;box-shadow:0 10px 30px rgba(180,110,140,.25);z-index:5}
 nav.tabs button{border:0;background:none;font:inherit;font-size:14px;font-weight:800;color:var(--muted);padding:10px 16px;border-radius:99px;cursor:pointer;white-space:nowrap}
 nav.tabs button.on{background:var(--ink);color:#FFF}
-#toast{position:fixed;left:50%;bottom:86px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#FFF;padding:11px 16px;border-radius:16px;font-size:14px;max-width:min(92vw,460px);opacity:0;pointer-events:none;transition:.25s;z-index:9;text-align:center}
+#toast{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--ink);color:#FFF;padding:11px 16px;border-radius:16px;font-size:14px;max-width:min(92vw,460px);opacity:0;pointer-events:none;transition:.25s;z-index:9;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .copybox{width:100%;min-height:90px;margin-top:8px;border-radius:12px;border:2px solid var(--line);padding:8px;font:inherit;font-size:13px}
 
