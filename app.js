@@ -1,5 +1,9 @@
 /* bff calendar ♡ — free version (Supabase) */
 const CFG = window.BFF_CONFIG;
+if(!window.supabase){
+  document.getElementById('view').innerHTML='<div class="card empty">📡 You\'re offline<br><br>Connect to the internet and reopen bff calendar 💖</div>';
+  throw new Error('offline: database library not loaded');
+}
 const sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
 });
@@ -66,6 +70,23 @@ function hourOptions(sel){return [...Array(24)].map((_,h)=>`<option value="${h}"
 function copyText(txt,okMsg){
   const fallback=()=>{const w=document.getElementById('copywrap');w.innerHTML=`<div class="card form" style="margin-top:14px"><b>Copy this 💌</b><textarea class="copybox" readonly>${esc(txt)}</textarea></div>`;w.scrollIntoView({behavior:'smooth'})};
   try{navigator.clipboard.writeText(txt).then(()=>toast(okMsg),fallback)}catch(err){fallback()}
+}
+
+/* ---------- install as an app (PWA) ---------- */
+let installEvt=null;
+const isStandalone=()=>{try{return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(e){return false}};
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;if(S.stage==='app')render()});
+window.addEventListener('appinstalled',()=>{installEvt=null;ls.set('bff.installHint','done');toast('Installed! Find bff calendar on your home screen 💖');render()});
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+function canInstall(){return !isStandalone()&&(installEvt||isIOS)}
+function installCard(where){
+  if(!canInstall())return '';
+  if(where==='friends'&&ls.get('bff.installHint'))return '';
+  const close=where==='friends'?`<button class="x" data-act="hideinstall" aria-label="dismiss">✕</button>`:'';
+  if(installEvt)return `<div class="card install"><img src="icons/icon-192.png" alt=""><div class="t"><b>Get the app 📲</b>Add bff calendar to your home screen — opens like a real app.</div><button class="btn soft" data-act="install">Install</button>${close}</div>`;
+  return `<div class="card install" style="flex-wrap:wrap"><img src="icons/icon-192.png" alt=""><div class="t"><b>Get the app 📲</b>Add it to your home screen in 3 taps:</div>${close}
+    <ol class="ios-steps" style="flex-basis:100%"><li>Tap the <b>Share</b> button <span aria-hidden="true">⬆️</span> in Safari</li><li>Choose <b>Add to Home Screen</b></li><li>Tap <b>Add</b> ✨</li></ol></div>`;
 }
 
 /* ---------- data layer ---------- */
@@ -216,7 +237,7 @@ function vCircleSetup(){
 /* --- friends --- */
 function banners(){return S.note?`<div class="note">${esc(S.note)}</div>`:''}
 function vFriends(){
-  const now=Date.now();let h=banners();
+  const now=Date.now();let h=banners()+installCard('friends');
   const ppl=sorted();
   if(ppl.length<=1&&circle())h+=`<button class="join card" data-act="invite"><b>💌 Invite your friends</b><span>Send the link to the group chat — they're in with one tap</span></button>`;
   h+=`<h2>Right now</h2><div class="now-list">`+(ppl.length?ppl.map(p=>nowCard(p,now)).join(''):`<div class="card empty">Loading your besties… 💫</div>`)+`</div>`;
@@ -377,7 +398,7 @@ function vMe(){
     <div class="row-between"><h2>My upcoming plans</h2>${m.blocks.some(b=>b.src==='ics')?`<button class="btn soft" data-act="clrics">Clear imported</button>`:''}</div>
     <div class="card mine" id="myblocks">${myBlocks()}</div>`;
   }
-  h+=circlesCard()+accountCard();
+  h+=(canInstall()?`<h2>Get the app</h2>`+installCard('me'):'')+circlesCard()+accountCard();
   return h+`</div>`;
 }
 function circlesCard(){
@@ -531,6 +552,8 @@ document.addEventListener('click',async e=>{
     const {error}=await sb.from('blocks').delete().eq('user_id',S.uid).eq('src','ics');
     if(error)toast(errMsg(error));else{toast('Imported events cleared 🧹');loadCircle()}
   }
+  else if(a==='install'){if(!installEvt)return;installEvt.prompt();const r=await installEvt.userChoice.catch(()=>null);installEvt=null;if(r&&r.outcome!=='accepted')toast('No worries — you can install it anytime from the Me tab');render(true)}
+  else if(a==='hideinstall'){ls.set('bff.installHint','hidden');render(true)}
   else if(a==='leave'||a==='delacct'){
     if(!el.dataset.armed){el.dataset.armed='1';el.dataset.orig=el.textContent;el.textContent=a==='leave'?'Leave? tap again':'Tap again to delete forever';el.classList.add('danger');setTimeout(()=>{if(el.isConnected){delete el.dataset.armed;el.textContent=el.dataset.orig;el.classList.remove('danger')}},4000);return}
     el.disabled=true;
