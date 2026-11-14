@@ -200,6 +200,7 @@ function vWelcome(){
   }else{
     h+=`<p class="hint" style="text-align:center;margin-top:16px">Used it before on another phone? <a href="#" data-act="wmode" data-m="email">Sign in with email</a></p>`;
   }
+  h+=`<p class="hint" style="text-align:center;margin-top:10px;font-size:12px">By continuing you agree to our <a href="terms.html">Terms</a> and <a href="privacy.html">Privacy Policy</a>.</p>`;
   return h;
 }
 function vCircleSetup(){
@@ -380,7 +381,7 @@ function vMe(){
   return h+`</div>`;
 }
 function circlesCard(){
-  return `<h2>My circles</h2><div class="card mine">${S.circles.map(c=>`<div class="mi"><span class="dot" style="background:var(--pink)"></span><div class="t"><b>${esc(c.name)}</b><small>Code ${esc(c.invite_code)}${c.role==='owner'?' · you made this':''}</small></div><button class="btn soft" data-act="invite" data-c="${c.id}">Invite</button></div>`).join('')}
+  return `<h2>My circles</h2><div class="card mine">${S.circles.map(c=>`<div class="mi"><span class="dot" style="background:var(--pink)"></span><div class="t"><b>${esc(c.name)}</b><small>Code ${esc(c.invite_code)}${c.role==='owner'?' · you made this':''}</small></div><button class="btn soft" data-act="invite" data-c="${c.id}">Invite</button><button class="x" data-act="leave" data-c="${c.id}" aria-label="leave circle" title="Leave circle">✕</button></div>`).join('')}
   <form id="codeform" class="mi" style="gap:8px"><input type="text" name="code" maxlength="12" placeholder="Join with a code" autocapitalize="characters" required><button class="btn soft">Join</button></form>
   <form id="newcircle" class="mi" style="gap:8px"><input type="text" name="name" maxlength="40" placeholder="New circle name" required><button class="btn soft">Create</button></form></div>`;
 }
@@ -390,9 +391,14 @@ function accountCard(){
       <div style="font-size:14px">Right now you're signed in on <b>this device only</b>. Add your email so you can sign in on another phone and never lose your calendar.</div>
       <label class="l">Email</label><input type="text" inputmode="email" name="email" placeholder="you@email.com" required>
       <div style="margin-top:12px"><button class="btn mint full">Save my account</button></div>
-      <p class="hint">We'll email you a link to confirm. That's it — no password.</p></form>`;
+      <p class="hint">We'll email you a link to confirm. That's it — no password.</p></form>`+dangerZone();
   }
-  return `<h2>Account</h2><div class="card form"><div style="font-size:14px">Signed in as <b>${esc(S.email)}</b> ✅</div><div style="margin-top:12px"><button class="btn soft" data-act="signout">Sign out</button></div></div>`;
+  return `<h2>Account</h2><div class="card form"><div style="font-size:14px">Signed in as <b>${esc(S.email)}</b> ✅</div><div style="margin-top:12px"><button class="btn soft" data-act="signout">Sign out</button></div></div>`+dangerZone();
+}
+function dangerZone(){
+  return `<div class="card form" style="margin-top:12px"><div style="font-size:14px"><b>Delete my account</b><br><span class="hint" style="margin:0">Removes your profile, all your plans and your circle memberships for good. Circles with nobody left in them are deleted too.</span></div>
+  <div style="margin-top:12px"><button class="btn soft" data-act="delacct">Delete my account</button></div></div>
+  <p class="hint" style="text-align:center;margin-top:14px"><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></p>`;
 }
 function myBlocks(){
   const m=S.me;if(!m)return '';
@@ -506,6 +512,24 @@ document.addEventListener('click',async e=>{
   else if(a==='clrics'){
     const {error}=await sb.from('blocks').delete().eq('user_id',S.uid).eq('src','ics');
     if(error)toast(errMsg(error));else{toast('Imported events cleared 🧹');loadCircle()}
+  }
+  else if(a==='leave'||a==='delacct'){
+    if(!el.dataset.armed){el.dataset.armed='1';el.dataset.orig=el.textContent;el.textContent=a==='leave'?'Leave? tap again':'Tap again to delete forever';el.classList.add('danger');setTimeout(()=>{if(el.isConnected){delete el.dataset.armed;el.textContent=el.dataset.orig;el.classList.remove('danger')}},4000);return}
+    el.disabled=true;
+    if(a==='leave'){
+      const id=el.dataset.c;const {error}=await sb.rpc('leave_circle',{p_circle:id});
+      if(error){toast(errMsg(error));el.disabled=false;return}
+      S.circles=S.circles.filter(c=>c.id!==id);toast('You left the circle 👋');
+      if(!S.circles.length){S.circleId=null;S.people=[];S.stage='circle';render(true);return}
+      if(S.circleId===id){S.circleId=S.circles[0].id;S.people=[]}
+      render(true);loadCircle();
+    }else{
+      const {error}=await sb.rpc('delete_my_account');
+      if(error){toast(errMsg(error));el.disabled=false;return}
+      await sb.auth.signOut();ls.set('bff.circle',null);
+      Object.assign(S,{people:[],me:null,circles:[],circleId:null,myProfile:null,tab:'friends'});
+      toast('Your account was deleted. Bye for now 💌');
+    }
   }
   else if(a==='signout'){await sb.auth.signOut();S.people=[];S.me=null;S.circles=[];S.circleId=null;S.myProfile=null;ls.set('bff.circle',null)}
 });
