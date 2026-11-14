@@ -481,6 +481,7 @@ function getCaptcha(){
       const box=document.getElementById('captcha');box.innerHTML='';box.style.display='flex';
       try{window.turnstile.render(box,{sitekey:CFG.turnstileSiteKey,appearance:'interaction-only',
         callback:t=>{box.style.display='none';res(t)},
+        'before-interactive-callback':()=>{toast('Quick human check 👇 tap the box');box.scrollIntoView({behavior:'smooth',block:'center'})},
         'error-callback':()=>{box.style.display='none';rej(new Error('Human check failed — please try again 🙏'))}})}
       catch(e){rej(e)}
     };
