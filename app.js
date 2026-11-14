@@ -473,11 +473,28 @@ function expandICS(evs,defTz,from,to){
 }
 
 /* ---------- events ---------- */
+function getCaptcha(){
+  if(!CFG.turnstileSiteKey)return Promise.resolve(undefined);
+  return new Promise((res,rej)=>{
+    let n=0;
+    const go=()=>{
+      const box=document.getElementById('captcha');box.innerHTML='';box.style.display='flex';
+      try{window.turnstile.render(box,{sitekey:CFG.turnstileSiteKey,appearance:'interaction-only',
+        callback:t=>{box.style.display='none';res(t)},
+        'error-callback':()=>{box.style.display='none';rej(new Error('Human check failed — please try again 🙏'))}})}
+      catch(e){rej(e)}
+    };
+    (function wait(){if(window.turnstile)go();else if(n++<50)setTimeout(wait,200);else rej(new Error("Couldn't load the human check — check your connection"))})();
+  });
+}
 async function startAnon(){
   if(S.busy)return;S.busy=true;
-  const {error}=await sb.auth.signInAnonymously();
-  S.busy=false;
-  if(error)toast(errMsg(error));
+  try{
+    let captchaToken;
+    try{captchaToken=await getCaptcha()}catch(e){toast(e.message);return}
+    const {error}=await sb.auth.signInAnonymously({options:{captchaToken}});
+    if(error)toast(errMsg(error));
+  }finally{S.busy=false}
 }
 document.addEventListener('click',async e=>{
   const el=e.target.closest('[data-act]');if(!el)return;const a=el.dataset.act;
@@ -585,7 +602,8 @@ document.addEventListener('submit',async e=>{
     }
     else if(f.id==='emailform'){
       const email=f.email.value.trim();
-      const {error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:false,emailRedirectTo:location.origin+location.pathname}});
+      let captchaToken;try{captchaToken=await getCaptcha()}catch(err){toast(err.message);return}
+      const {error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:false,emailRedirectTo:location.origin+location.pathname,captchaToken}});
       if(error)toast(/signups? not allowed|not found/i.test(error.message)?"No account with that email yet — tap “Start a circle” instead 🌷":errMsg(error));
       else toast('Check your email for the sign-in link ✨');
     }
